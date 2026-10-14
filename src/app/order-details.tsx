@@ -34,8 +34,8 @@ export default function OrderDetailsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
-  
-const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   const [selectedRatings, setSelectedRatings] = useState<
     Record<string, number>
@@ -64,20 +64,20 @@ const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
   }
 
   useEffect(() => {
-  if (!order?.items?.length) return;
+    if (!order?.items?.length) return;
 
-  const phoneIds = [
-    ...new Set(
-      order.items
-        .map((item) => item.phoneId)
-        .filter((id): id is string => Boolean(id)),
-    ),
-  ];
+    const phoneIds = [
+      ...new Set(
+        order.items
+          .map((item) => item.phoneId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
 
-  phoneIds.forEach((phoneId) => {
-    fetchMyRating(phoneId);
-  });
-}, [invoice]);
+    phoneIds.forEach((phoneId) => {
+      fetchMyRating(phoneId);
+    });
+  }, [invoice]);
 
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString("en-IN", {
@@ -88,36 +88,33 @@ const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
   };
 
   const fetchMyRating = async (phoneId: string) => {
-  try {
-    const token = await getToken();
+    try {
+      const token = await getToken();
 
-    if (!token) return;
+      if (!token) return;
 
-    const response = await fetch(
-      `${API_URL}/api/ratings/${phoneId}`,
-      {
+      const response = await fetch(`${API_URL}/api/ratings/${phoneId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      },
-    );
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.message || "Failed to fetch rating.");
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch rating.");
+      }
+
+      if (data.rating !== null && data.rating !== undefined) {
+        setSelectedRatings((previous) => ({
+          ...previous,
+          [phoneId]: Number(data.rating),
+        }));
+      }
+    } catch (error) {
+      console.error("Failed to fetch customer's rating:", error);
     }
-
-    if (data.rating !== null && data.rating !== undefined) {
-      setSelectedRatings((previous) => ({
-        ...previous,
-        [phoneId]: Number(data.rating),
-      }));
-    }
-  } catch (error) {
-    console.error("Failed to fetch customer's rating:", error);
-  }
-};
+  };
 
   const submitRating = async (phoneId?: string) => {
     if (!phoneId) {
@@ -309,25 +306,22 @@ const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
                   backgroundColor: theme.background,
                 }}
               >
-                
-{item.image ? (
-  <Image
-    source={
-      failedImages[`${order.invoiceNumber}-${index}`]
-        ? require("@/assets/images/phone-placeholder.png")
-        : { uri: item.image }
-    }
-    className="h-full w-full"
-    resizeMode="contain"
-    onError={() => {
-      setFailedImages((previous) => ({
-        ...previous,
-        [`${order.invoiceNumber}-${index}`]: true,
-      }));
-    }}
-  />
-) : null}
-
+                <Image
+                  source={
+                    item.image &&
+                    !failedImages[`${order.invoiceNumber}-${index}`]
+                      ? { uri: item.image }
+                      : require("@/assets/images/phone-placeholder.png")
+                  }
+                  className="h-full w-full"
+                  resizeMode="contain"
+                  onError={() => {
+                    setFailedImages((previous) => ({
+                      ...previous,
+                      [`${order.invoiceNumber}-${index}`]: true,
+                    }));
+                  }}
+                />
               </View>
 
               {/* Product Info */}
@@ -436,17 +430,19 @@ const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
                     </Text>
                   ) : null}
 
-                  {ratingStats[item.phoneId || item.name] ? (
-  <Text
-    className="mt-2 text-sm font-semibold"
-    style={{ color: theme.text }}
-  >
-    Average Rating:{" "}
-    {ratingStats[item.phoneId || item.name].averageRating.toFixed(1)}
-    {" "}({ratingStats[item.phoneId || item.name].ratingCount} ratings)
-  </Text>
-) : null}
-
+                  {/* {ratingStats[item.phoneId || item.name] ? (
+                    <Text
+                      className="mt-2 text-sm font-semibold"
+                      style={{ color: theme.text }}
+                    >
+                      Average Rating:{" "}
+                      {ratingStats[
+                        item.phoneId || item.name
+                      ].averageRating.toFixed(1)}{" "}
+                      ({ratingStats[item.phoneId || item.name].ratingCount}{" "}
+                      ratings)
+                    </Text>
+                  ) : null} */}
                 </View>
               </View>
             </View>

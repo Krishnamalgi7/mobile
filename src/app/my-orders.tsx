@@ -18,7 +18,7 @@ import {
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+
 
 import { useTheme } from "@/hooks/use-theme";
 import { getToken } from "@/services/authService";
@@ -92,13 +92,14 @@ export default function MyOrdersScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-
+const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedRatings, setSelectedRatings] = useState<
     Record<string, number>
   >({});
+
 
   useEffect(() => {
     fetchOrders();
@@ -298,26 +299,21 @@ export default function MyOrdersScreen() {
                       backgroundColor: theme.background,
                     }}
                   >
-                    {item.image ? (
-                      <Image
-                        source={
-                          !item.image ||
-                          failedImages[`${order.invoiceNumber}-${index}`]
-                            ? require("@/assets/images/phone-placeholder.png")
-                            : { uri: item.image }
-                        }
-                        className="h-full w-full"
-                        resizeMode="contain"
-                        onError={() => {
-                          setFailedImages((previous) => ({
-                            ...previous,
-                            [`${order.invoiceNumber}-${index}`]: true,
-                          }));
-                        }}
-                      />
-                    ) : (
-                      <Package size={28} color={theme.secondaryText} />
-                    )}
+                    <Image
+  source={
+    item.image && !failedImages[`${order.invoiceNumber}-${index}`]
+      ? { uri: item.image }
+      : require("@/assets/images/phone-placeholder.png")
+  }
+  className="h-full w-full"
+  resizeMode="contain"
+  onError={() => {
+    setFailedImages((previous) => ({
+      ...previous,
+      [`${order.invoiceNumber}-${index}`]: true,
+    }));
+  }}
+/>
                   </View>
 
                   <View className="ml-3 flex-1">
