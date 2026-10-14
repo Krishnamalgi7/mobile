@@ -1,7 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {Sun} from "lucide-react-native";
+import { Sun } from "lucide-react-native";
 
 import { API_URL } from "@/constants/config";
 import { useTheme } from "@/hooks/use-theme";
@@ -11,12 +12,16 @@ type StoreSettings = {
   logo?: string;
 };
 
+const LOCAL_STORE_LOGO = require("@/assets/images/store-logo.png");
+
 export default function Header() {
   const [storeSettings, setStoreSettings] =
     useState<StoreSettings | null>(null);
+  const [logoFailed, setLogoFailed] = useState(false);
 
   const { theme, cycleTheme } = useTheme();
-const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsets();
+
   useEffect(() => {
     const fetchStoreSettings = async () => {
       try {
@@ -27,7 +32,6 @@ const insets = useSafeAreaInsets();
         }
 
         const data = await response.json();
-
         setStoreSettings(data);
       } catch (error) {
         console.error("Store settings error:", error);
@@ -37,25 +41,30 @@ const insets = useSafeAreaInsets();
     fetchStoreSettings();
   }, []);
 
+  const remoteLogo = storeSettings?.logo
+    ? { uri: `${API_URL}${storeSettings.logo}` }
+    : null;
+
   return (
     <View
-  className="flex-row items-center justify-between border-b px-7 pb-5"
-  style={{
-    backgroundColor: theme.background,
-    borderBottomColor: theme.border,
-    paddingTop: insets.top,
-  }}
->
+      className="flex-row items-center justify-between border-b px-7 pb-5"
+      style={{
+        backgroundColor: theme.background,
+        borderBottomColor: theme.border,
+        paddingTop: insets.top,
+      }}
+    >
       <View className="flex-row items-center">
-        {storeSettings?.logo ? (
-          <Image
-            source={{
-              uri: `${API_URL}${storeSettings.logo}`,
-            }}
-            className="mr-3 h-10 w-10 rounded-xl"
-            resizeMode="contain"
-          />
-        ) : null}
+        <Image
+          source={
+            remoteLogo && !logoFailed
+              ? remoteLogo
+              : LOCAL_STORE_LOGO
+          }
+          className="mr-3 h-10 w-10 rounded-xl"
+          resizeMode="contain"
+          onError={() => setLogoFailed(true)}
+        />
 
         <View>
           <Text
@@ -75,16 +84,11 @@ const insets = useSafeAreaInsets();
       </View>
 
       <TouchableOpacity
-        className="h-10 w-10 items-center justify-center rounded-full mt-1"
-        style={{
-          backgroundColor: theme.secondary,
-        }}
+        className="mt-1 h-10 w-10 items-center justify-center rounded-full"
+        style={{ backgroundColor: theme.secondary }}
         onPress={cycleTheme}
       >
-        <Sun 
-        size={20} 
-        color={theme.text} 
-      />
+        <Sun size={20} color={theme.text} />
       </TouchableOpacity>
     </View>
   );

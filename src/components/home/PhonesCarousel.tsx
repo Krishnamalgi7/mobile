@@ -23,6 +23,33 @@ function getPhoneValue(value: unknown) {
   return String(value ?? "");
 }
 
+
+function PhoneCarouselImage({
+  image,
+}: {
+  image?: string | null;
+}) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [image]);
+
+  return (
+    <Image
+      source={
+        !image || imageFailed
+          ? require("@/assets/images/phone-placeholder.png")
+          : { uri: image }
+      }
+      className="h-full w-full"
+      resizeMode="contain"
+      onError={() => setImageFailed(true)}
+    />
+  );
+}
+
+
 export default function NewPhonesCarousel() {
 
   const router = useRouter();
@@ -157,17 +184,11 @@ export default function NewPhonesCarousel() {
             }}
             className="mr-4 h-[410px] overflow-hidden rounded-3xl border"
           >
-            <View className="h-80 items-center justify-center p-6">
-              {phone.image ? (
-                <Image
-                  source={{ uri: phone.image }}
-                  className="h-full w-full"
-                  resizeMode="contain"
-                />
-              ) : (
-                <Text style={{ color: theme.secondaryText }}>No image</Text>
-              )}
-            </View>
+            
+<View className="h-80 items-center justify-center p-6">
+  <PhoneCarouselImage image={phone.image} />
+</View>
+
 
             <View className="px-5 pb-5">
               <Text

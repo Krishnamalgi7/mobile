@@ -19,13 +19,20 @@
     },
     "plugins": [
       "expo-router",
-    
       "expo-secure-store",
-      "expo-sharing"
+      "expo-sharing",
+      "expo-splash-screen"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "984183ef-3cb3-4424-bab9-5ea12e6e92b4"
+      }
+    },
+    "owner": "krishnamalgi6"
   }
 }
