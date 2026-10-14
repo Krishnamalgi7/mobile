@@ -5,10 +5,38 @@ import { Package, Star } from "lucide-react-native";
 import type { Phone } from "@/services/phoneService";
 import { formatIndianCurrency } from "@/utils/formatters";
 import { useTheme } from "@/hooks/use-theme";
+import { useEffect, useState } from "react";
 
 type PhoneCardProps = {
   phone: Phone;
 };
+
+
+function PhoneCardImage({
+  image,
+}: {
+  image?: string | null;
+}) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [image]);
+
+  return (
+    <Image
+      source={
+        !image || imageFailed
+          ? require("@/assets/images/phone-placeholder.png")
+          : { uri: image }
+      }
+      className="h-full w-full"
+      resizeMode="contain"
+      onError={() => setImageFailed(true)}
+    />
+  );
+}
+
 
 export default function PhoneCard({ phone }: PhoneCardProps) {
     const router = useRouter();
@@ -27,19 +55,11 @@ export default function PhoneCard({ phone }: PhoneCardProps) {
         borderColor: theme.border,
       }}
     >
-      <View className="h-40 w-full items-center justify-center">
-        {phone.image ? (
-          <Image
-            source={{ uri: phone.image }}
-            className="h-full w-full"
-            resizeMode="contain"
-          />
-        ) : (
-          <Text style={{ color: theme.secondaryText }}>
-            No image
-          </Text>
-        )}
-      </View>
+      
+<View className="h-40 w-full items-center justify-center">
+  <PhoneCardImage image={phone.image} />
+</View>
+
 
       <View className="px-3 pb-3">
         <Text

@@ -37,17 +37,12 @@ type ReferenceValue =
       value?: string;
     };
 
-function getReferenceValue(
-  value: ReferenceValue | unknown,
-): string {
+function getReferenceValue(value: ReferenceValue | unknown): string {
   if (typeof value === "string") {
     return value;
   }
 
-  if (
-    typeof value === "object" &&
-    value !== null
-  ) {
+  if (typeof value === "object" && value !== null) {
     const reference = value as {
       name?: string;
       value?: string;
@@ -63,94 +58,92 @@ export default function PhoneDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme } = useTheme();
-const { isLoggedIn } = useAuth();
-const insets = useSafeAreaInsets();
-const [addingToCart, setAddingToCart] = useState(false);
-const [cartMessage, setCartMessage] = useState("");
-const [cartQuantity, setCartQuantity] = useState<number | null>(null);
-const [updatingCart, setUpdatingCart] = useState(false);
+  const { isLoggedIn } = useAuth();
+  const insets = useSafeAreaInsets();
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [cartMessage, setCartMessage] = useState("");
+  const [cartQuantity, setCartQuantity] = useState<number | null>(null);
+  const [updatingCart, setUpdatingCart] = useState(false);
 
-const checkCartQuantity = async (phoneId: string) => {
-  if (!isLoggedIn) {
-    setCartQuantity(null);
-    return;
-  }
+  const [imageFailed, setImageFailed] = useState(false);
 
-  try {
-    const cart = await getCart();
-
-    const cartItem = cart.items.find(
-      (item) => item.phoneId._id === phoneId,
-    );
-
-    setCartQuantity(cartItem?.quantity ?? null);
-  } catch (error) {
-    console.error("Check cart quantity error:", error);
-    setCartQuantity(null);
-  }
-};
-
-const handleAddToCart = async () => {
-  if (!isLoggedIn) {
-    router.push("/login");
-    return;
-  }
-
-  if (!phone || phone.quantity <= 0) {
-    return;
-  }
-
-  try {
-    setAddingToCart(true);
-    setCartMessage("");
-
-    await addToCart(phone._id);
-    setCartQuantity(1);
-
-    setCartMessage("Added to cart");
-  } catch (error) {
-    console.error("Add to cart error:", error);
-
-    setCartMessage(
-      error instanceof Error
-        ? error.message
-        : "Failed to add to cart"
-    );
-  } finally {
-    setAddingToCart(false);
-  }
-};
-
-const handleCartQuantityChange = async (newQuantity: number) => {
-  if (!phone || cartQuantity === null) {
-    return;
-  }
-
-  try {
-    setUpdatingCart(true);
-    setCartMessage("");
-
-    if (newQuantity <= 0) {
-      await removeFromCart(phone._id);
+  const checkCartQuantity = async (phoneId: string) => {
+    if (!isLoggedIn) {
       setCartQuantity(null);
-      setCartMessage("");
       return;
     }
 
-    await updateCartQuantity(phone._id, newQuantity);
-    setCartQuantity(newQuantity);
-  } catch (error) {
-    console.error("Phone details cart quantity error:", error);
+    try {
+      const cart = await getCart();
 
-    setCartMessage(
-      error instanceof Error
-        ? error.message
-        : "Failed to update cart quantity",
-    );
-  } finally {
-    setUpdatingCart(false);
-  }
-};
+      const cartItem = cart.items.find((item) => item.phoneId._id === phoneId);
+
+      setCartQuantity(cartItem?.quantity ?? null);
+    } catch (error) {
+      console.error("Check cart quantity error:", error);
+      setCartQuantity(null);
+    }
+  };
+
+  const handleAddToCart = async () => {
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
+
+    if (!phone || phone.quantity <= 0) {
+      return;
+    }
+
+    try {
+      setAddingToCart(true);
+      setCartMessage("");
+
+      await addToCart(phone._id);
+      setCartQuantity(1);
+
+      setCartMessage("Added to cart");
+    } catch (error) {
+      console.error("Add to cart error:", error);
+
+      setCartMessage(
+        error instanceof Error ? error.message : "Failed to add to cart",
+      );
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const handleCartQuantityChange = async (newQuantity: number) => {
+    if (!phone || cartQuantity === null) {
+      return;
+    }
+
+    try {
+      setUpdatingCart(true);
+      setCartMessage("");
+
+      if (newQuantity <= 0) {
+        await removeFromCart(phone._id);
+        setCartQuantity(null);
+        setCartMessage("");
+        return;
+      }
+
+      await updateCartQuantity(phone._id, newQuantity);
+      setCartQuantity(newQuantity);
+    } catch (error) {
+      console.error("Phone details cart quantity error:", error);
+
+      setCartMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to update cart quantity",
+      );
+    } finally {
+      setUpdatingCart(false);
+    }
+  };
 
   const [phone, setPhone] = useState<Phone | null>(null);
   const [loading, setLoading] = useState(true);
@@ -172,8 +165,8 @@ const handleCartQuantityChange = async (newQuantity: number) => {
 
         setPhone(data);
         if (isLoggedIn) {
-  await checkCartQuantity(data._id);
-}
+          await checkCartQuantity(data._id);
+        }
       } catch (error) {
         console.error("Phone details error:", error);
         setError("Unable to load phone details.");
@@ -191,15 +184,9 @@ const handleCartQuantityChange = async (newQuantity: number) => {
         className="flex-1 items-center justify-center"
         style={{ backgroundColor: theme.background }}
       >
-        <ActivityIndicator
-          size="large"
-          color={theme.accent}
-        />
+        <ActivityIndicator size="large" color={theme.accent} />
 
-        <Text
-          className="mt-3"
-          style={{ color: theme.secondaryText }}
-        >
+        <Text className="mt-3" style={{ color: theme.secondaryText }}>
           Loading phone details...
         </Text>
       </View>
@@ -224,10 +211,7 @@ const handleCartQuantityChange = async (newQuantity: number) => {
           style={{ backgroundColor: theme.accent }}
           onPress={() => router.back()}
         >
-          <Text
-            className="font-semibold"
-            style={{ color: theme.background }}
-          >
+          <Text className="font-semibold" style={{ color: theme.background }}>
             Go Back
           </Text>
         </TouchableOpacity>
@@ -237,8 +221,7 @@ const handleCartQuantityChange = async (newQuantity: number) => {
 
   const finalPrice = phone.totalPrice ?? phone.price;
   const hasDiscount =
-    phone.discountPercentage !== undefined &&
-    phone.discountPercentage > 0;
+    phone.discountPercentage !== undefined && phone.discountPercentage > 0;
 
   const inStock = phone.quantity > 0;
 
@@ -250,34 +233,23 @@ const handleCartQuantityChange = async (newQuantity: number) => {
   const color =
     typeof phone.colorId === "string"
       ? phone.colorId
-      : phone.colorId?.name ?? "N/A";
+      : (phone.colorId?.name ?? "N/A");
 
   return (
-    <View
-      className="flex-1"
-      style={{ backgroundColor: theme.background }}
-    >
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
       <View
         className="flex-row items-center border-b px-4 py-4"
-        style={{ borderColor: theme.border,
-              paddingTop: insets.top + 16,
-         }}
+        style={{ borderColor: theme.border, paddingTop: insets.top + 16 }}
       >
         <TouchableOpacity
           className="mr-3 h-10 w-10 items-center justify-center rounded-full"
           style={{ backgroundColor: theme.secondary }}
           onPress={() => router.back()}
         >
-          <ArrowLeft
-            size={21}
-            color={theme.text}
-          />
+          <ArrowLeft size={21} color={theme.text} />
         </TouchableOpacity>
 
-        <Text
-          className="text-lg font-bold"
-          style={{ color: theme.text }}
-        >
+        <Text className="text-lg font-bold" style={{ color: theme.text }}>
           Phone Details
         </Text>
       </View>
@@ -287,29 +259,27 @@ const handleCartQuantityChange = async (newQuantity: number) => {
         contentContainerClassName="pb-8"
         showsVerticalScrollIndicator={false}
       >
-        {/* Product Image */}
+        
+{/* Product Image */}
+<View
+  className="mx-4 mt-5 h-80 items-center justify-center rounded-3xl border"
+  style={{
+    backgroundColor: theme.secondary,
+    borderColor: theme.border,
+  }}
+>
+  <Image
+    source={
+      phone.image && !imageFailed
+        ? { uri: phone.image }
+        : require("@/assets/images/phone-placeholder.png")
+    }
+    className="h-full w-full"
+    resizeMode="contain"
+    onError={() => setImageFailed(true)}
+  />
+</View>
 
-        <View
-          className="mx-4 mt-5 h-80 items-center justify-center rounded-3xl border"
-          style={{
-            backgroundColor: theme.secondary,
-            borderColor: theme.border,
-          }}
-        >
-          {phone.image ? (
-            <Image
-              source={{ uri: phone.image }}
-              className="h-full w-full"
-              resizeMode="contain"
-            />
-          ) : (
-            <Text
-              style={{ color: theme.secondaryText }}
-            >
-              No image available
-            </Text>
-          )}
-        </View>
 
         {/* Product Information */}
 
@@ -348,11 +318,7 @@ const handleCartQuantityChange = async (newQuantity: number) => {
 
           <View className="mt-3 flex-row items-center">
             <View className="flex-row items-center">
-              <Star
-                size={17}
-                color={theme.accent}
-                fill={theme.accent}
-              />
+              <Star size={17} color={theme.accent} fill={theme.accent} />
 
               <Text
                 className="ml-1 font-semibold"
@@ -362,10 +328,7 @@ const handleCartQuantityChange = async (newQuantity: number) => {
               </Text>
             </View>
 
-            <Text
-              className="ml-2"
-              style={{ color: theme.secondaryText }}
-            >
+            <Text className="ml-2" style={{ color: theme.secondaryText }}>
               · {phone.ratingCount ?? 0} ratings
             </Text>
           </View>
@@ -413,19 +376,13 @@ const handleCartQuantityChange = async (newQuantity: number) => {
             <View className="mt-3 flex-row items-center">
               <Package
                 size={16}
-                color={
-                  inStock
-                    ? theme.accent
-                    : theme.secondaryText
-                }
+                color={inStock ? theme.accent : theme.secondaryText}
               />
 
               <Text
                 className="ml-2 text-sm font-medium"
                 style={{
-                  color: inStock
-                    ? theme.text
-                    : theme.secondaryText,
+                  color: inStock ? theme.text : theme.secondaryText,
                 }}
               >
                 {inStock
@@ -435,99 +392,93 @@ const handleCartQuantityChange = async (newQuantity: number) => {
             </View>
           </View>
 
-{cartQuantity !== null ? (
-  <View
-    className="mt-6 flex-row items-center justify-between rounded-xl border px-4 py-3"
-    style={{
-      backgroundColor: theme.secondary,
-      borderColor: theme.border,
-    }}
-  >
-    <Text
-      className="font-semibold"
-      style={{ color: theme.text }}
-    >
-      Quantity
-    </Text>
+          {cartQuantity !== null ? (
+            <View
+              className="mt-6 flex-row items-center justify-between rounded-xl border px-4 py-3"
+              style={{
+                backgroundColor: theme.secondary,
+                borderColor: theme.border,
+              }}
+            >
+              <Text className="font-semibold" style={{ color: theme.text }}>
+                Quantity
+              </Text>
 
-    <View className="flex-row items-center">
-      <TouchableOpacity
-        onPress={() => handleCartQuantityChange(cartQuantity - 1)}
-        disabled={updatingCart}
-        className="h-9 w-9 items-center justify-center rounded-full"
-        style={{
-          backgroundColor: theme.background,
-          opacity: updatingCart ? 0.4 : 1,
-        }}
-        activeOpacity={0.8}
-      >
-        <Minus size={17} color={theme.text} />
-      </TouchableOpacity>
+              <View className="flex-row items-center">
+                <TouchableOpacity
+                  onPress={() => handleCartQuantityChange(cartQuantity - 1)}
+                  disabled={updatingCart}
+                  className="h-9 w-9 items-center justify-center rounded-full"
+                  style={{
+                    backgroundColor: theme.background,
+                    opacity: updatingCart ? 0.4 : 1,
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Minus size={17} color={theme.text} />
+                </TouchableOpacity>
 
-      <Text
-        className="mx-5 min-w-[20px] text-center text-lg font-bold"
-        style={{ color: theme.text }}
-      >
-        {cartQuantity}
-      </Text>
+                <Text
+                  className="mx-5 min-w-[20px] text-center text-lg font-bold"
+                  style={{ color: theme.text }}
+                >
+                  {cartQuantity}
+                </Text>
 
-      <TouchableOpacity
-        onPress={() => handleCartQuantityChange(cartQuantity + 1)}
-        disabled={updatingCart || cartQuantity >= phone.quantity}
-        className="h-9 w-9 items-center justify-center rounded-full"
-        style={{
-          backgroundColor: theme.background,
-          opacity:
-            updatingCart || cartQuantity >= phone.quantity ? 0.4 : 1,
-        }}
-        activeOpacity={0.8}
-      >
-        <Plus size={17} color={theme.text} />
-      </TouchableOpacity>
-    </View>
-  </View>
-) : null}
+                <TouchableOpacity
+                  onPress={() => handleCartQuantityChange(cartQuantity + 1)}
+                  disabled={updatingCart || cartQuantity >= phone.quantity}
+                  className="h-9 w-9 items-center justify-center rounded-full"
+                  style={{
+                    backgroundColor: theme.background,
+                    opacity:
+                      updatingCart || cartQuantity >= phone.quantity ? 0.4 : 1,
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Plus size={17} color={theme.text} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : null}
 
-{/* Add to Cart */}
-{cartQuantity === null ? (
-<TouchableOpacity
-  onPress={handleAddToCart}
-  disabled={addingToCart || !inStock}
-  className="mt-6 items-center rounded-xl py-4"
-  style={{
-    backgroundColor: theme.accent,
-    opacity: addingToCart || !inStock ? 0.5 : 1,
-  }}
-  activeOpacity={0.8}
->
-  {addingToCart ? (
-    <ActivityIndicator color={theme.background} />
-  ) : (
-    <View className="flex-row items-center">
-      <ShoppingCart
-        size={20}
-        color={theme.background}
-      />
+          {/* Add to Cart */}
+          {cartQuantity === null ? (
+            <TouchableOpacity
+              onPress={handleAddToCart}
+              disabled={addingToCart || !inStock}
+              className="mt-6 items-center rounded-xl py-4"
+              style={{
+                backgroundColor: theme.accent,
+                opacity: addingToCart || !inStock ? 0.5 : 1,
+              }}
+              activeOpacity={0.8}
+            >
+              {addingToCart ? (
+                <ActivityIndicator color={theme.background} />
+              ) : (
+                <View className="flex-row items-center">
+                  <ShoppingCart size={20} color={theme.background} />
 
-      <Text
-        className="ml-2 font-bold"
-        style={{ color: theme.background }}
-      >
-        Add to Cart
-      </Text>
-    </View>
-  )}
-</TouchableOpacity>
-) : null}
+                  <Text
+                    className="ml-2 font-bold"
+                    style={{ color: theme.background }}
+                  >
+                    Add to Cart
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          ) : null}
 
-{cartMessage ? (
-  <Text
-    className="mt-2 text-center text-sm"
-    style={{ color: theme.secondaryText }}
-  >
-    {cartMessage}
-  </Text>
-) : null}
+          {cartMessage ? (
+            <Text
+              className="mt-2 text-center text-sm"
+              style={{ color: theme.secondaryText }}
+            >
+              {cartMessage}
+            </Text>
+          ) : null}
 
           {/* Technical Details */}
 
@@ -553,8 +504,7 @@ const handleCartQuantityChange = async (newQuantity: number) => {
                 key={item.label}
                 className="flex-row justify-between px-4 py-3"
                 style={{
-                  borderBottomWidth:
-                    index < 4 ? 1 : 0,
+                  borderBottomWidth: index < 4 ? 1 : 0,
                   borderColor: theme.border,
                 }}
               >
@@ -592,7 +542,6 @@ const handleCartQuantityChange = async (newQuantity: number) => {
             {phone.description || "No description available."}
           </Text>
         </View>
-
       </ScrollView>
     </View>
   );

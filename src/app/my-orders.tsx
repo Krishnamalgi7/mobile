@@ -18,6 +18,8 @@ import {
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+
 import { useTheme } from "@/hooks/use-theme";
 import { getToken } from "@/services/authService";
 import { API_URL } from "@/constants/config";
@@ -298,9 +300,20 @@ export default function MyOrdersScreen() {
                   >
                     {item.image ? (
                       <Image
-                        source={{ uri: item.image }}
+                        source={
+                          !item.image ||
+                          failedImages[`${order.invoiceNumber}-${index}`]
+                            ? require("@/assets/images/phone-placeholder.png")
+                            : { uri: item.image }
+                        }
                         className="h-full w-full"
                         resizeMode="contain"
+                        onError={() => {
+                          setFailedImages((previous) => ({
+                            ...previous,
+                            [`${order.invoiceNumber}-${index}`]: true,
+                          }));
+                        }}
                       />
                     ) : (
                       <Package size={28} color={theme.secondaryText} />
@@ -340,8 +353,6 @@ export default function MyOrdersScreen() {
                   </View>
                 </View>
               ))}
-
-              {/* View Details */}
 
               {/* Order Actions */}
               <View

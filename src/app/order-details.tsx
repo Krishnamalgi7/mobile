@@ -34,6 +34,9 @@ export default function OrderDetailsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+  
+const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+
   const [selectedRatings, setSelectedRatings] = useState<
     Record<string, number>
   >({});
@@ -306,13 +309,25 @@ export default function OrderDetailsScreen() {
                   backgroundColor: theme.background,
                 }}
               >
-                {item.image ? (
-                  <Image
-                    source={{ uri: item.image }}
-                    className="h-full w-full"
-                    resizeMode="contain"
-                  />
-                ) : null}
+                
+{item.image ? (
+  <Image
+    source={
+      failedImages[`${order.invoiceNumber}-${index}`]
+        ? require("@/assets/images/phone-placeholder.png")
+        : { uri: item.image }
+    }
+    className="h-full w-full"
+    resizeMode="contain"
+    onError={() => {
+      setFailedImages((previous) => ({
+        ...previous,
+        [`${order.invoiceNumber}-${index}`]: true,
+      }));
+    }}
+  />
+) : null}
+
               </View>
 
               {/* Product Info */}

@@ -42,6 +42,7 @@ export default function CartScreen() {
   const [error, setError] = useState("");
   const [showBookNowPopup, setShowBookNowPopup] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   type CartSummary = {
     originalPrice: number;
@@ -145,9 +146,9 @@ export default function CartScreen() {
       setUpdating(true);
       setError("");
 
-      const updatedCart = await removeFromCart(phoneId);
-
-      setCart(updatedCart);
+      // Remove the item, then reload the cart in the same normalized shape as getCart().
+      await removeFromCart(phoneId);
+      await fetchCart();
       await fetchCartSummary();
     } catch (error) {
       console.error("Remove cart item error:", error);
@@ -394,15 +395,21 @@ if (loading) {
                         backgroundColor: theme.background,
                       }}
                     >
-                      {imageUri ? (
-                        <Image
-                          source={{ uri: imageUri }}
-                          className="h-full w-full"
-                          resizeMode="contain"
-                        />
-                      ) : (
-                        <ShoppingCart size={28} color={theme.secondaryText} />
-                      )}
+                      <Image
+                        source={
+                          imageUri && !failedImages[phone._id]
+                            ? { uri: imageUri }
+                            : require("@/assets/images/phone-placeholder.png")
+                        }
+                        className="h-full w-full"
+                        resizeMode="contain"
+                        onError={() => {
+                          setFailedImages((previous) => ({
+                            ...previous,
+                            [phone._id]: true,
+                          }));
+                        }}
+                      />
                     </View>
 
                     <View className="ml-4 flex-1">
