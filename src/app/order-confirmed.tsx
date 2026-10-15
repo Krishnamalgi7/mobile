@@ -1,15 +1,11 @@
 import { useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  SafeAreaView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { SafeAreaView, Text, TouchableOpacity, View } from "react-native";
 import { ArrowLeft, CheckCircle, Download } from "lucide-react-native";
 import * as Print from "expo-print";
 import { Asset } from "expo-asset";
+import * as FileSystem from "expo-file-system/legacy";
 import { useTheme } from "../hooks/use-theme";
 import { API_URL } from "../constants/config";
 
@@ -65,11 +61,11 @@ export default function OrderConfirmed() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
-  invoice?: string;
-  source?: string;
-}>();
+    invoice?: string;
+    source?: string;
+  }>();
 
-const isHistoricalOrder = params.source === "history";
+  const isHistoricalOrder = params.source === "history";
 
   const [downloading, setDownloading] = useState(false);
 
@@ -85,7 +81,6 @@ const isHistoricalOrder = params.source === "history";
 
   const handleDownloadInvoice = async () => {
     if (!invoice) {
-      
       console.error("Invoice data is missing");
       return;
     }
@@ -94,23 +89,70 @@ const isHistoricalOrder = params.source === "history";
       setDownloading(true);
 
       const remoteLogoUrl = invoice.storeLogo
-  ? invoice.storeLogo.startsWith("http")
-    ? invoice.storeLogo
-    : `${API_URL}${invoice.storeLogo}`
-  : "";
+        ? invoice.storeLogo.startsWith("http")
+          ? invoice.storeLogo
+          : `${API_URL}${invoice.storeLogo}`
+        : "";
 
-const fallbackAsset = Asset.fromModule(
-  require("@/assets/images/store-logo.png")
-);
+      let logoUrl = "";
 
-await fallbackAsset.downloadAsync();
+      try {
+        if (remoteLogoUrl) {
+          const response = await fetch(remoteLogoUrl);
 
-const logoUrl =
-  remoteLogoUrl || fallbackAsset.localUri || fallbackAsset.uri;
+          if (!response.ok) {
+            throw new Error("Failed to load remote store logo");
+          }
 
-      const invoiceDate = new Date(
-        invoice.invoiceDate
-      ).toLocaleDateString("en-IN");
+          const blob = await response.blob();
+          const reader = new FileReader();
+
+          const base64Logo: string = await new Promise((resolve, reject) => {
+            reader.onloadend = () => {
+              const result = reader.result;
+
+              if (typeof result === "string") {
+                resolve(result);
+              } else {
+                reject(new Error("Failed to convert store logo"));
+              }
+            };
+
+            reader.onerror = () =>
+              reject(new Error("Failed to read store logo"));
+            reader.readAsDataURL(blob);
+          });
+
+          logoUrl = base64Logo;
+        }
+      } catch (error) {
+        console.warn("Remote store logo failed; using local fallback.");
+      }
+
+      if (!logoUrl) {
+        const fallbackAsset = Asset.fromModule(
+          require("@/assets/images/store-logo.png"),
+        );
+
+        await fallbackAsset.downloadAsync();
+
+        if (!fallbackAsset.localUri) {
+          throw new Error("Local fallback logo is unavailable");
+        }
+
+        const fallbackBase64 = await FileSystem.readAsStringAsync(
+          fallbackAsset.localUri,
+          {
+            encoding: FileSystem.EncodingType.Base64,
+          },
+        );
+
+        logoUrl = `data:image/png;base64,${fallbackBase64}`;
+      }
+
+      const invoiceDate = new Date(invoice.invoiceDate).toLocaleDateString(
+        "en-IN",
+      );
 
       const itemsHtml = invoice.items
         .map(
@@ -140,7 +182,7 @@ const logoUrl =
                 ${formatCurrency(item.taxableAmount)}
               </td>
             </tr>
-          `
+          `,
         )
         .join("");
 
@@ -755,8 +797,8 @@ const logoUrl =
       `;
 
       await Print.printAsync({
-  html,
-});
+        html,
+      });
     } catch (error) {
       console.error("Invoice download error:", error);
     } finally {
@@ -765,7 +807,6 @@ const logoUrl =
   };
 
   if (!invoice) {
-    
     return (
       <SafeAreaView
         className="flex-1 items-center justify-center px-6"
@@ -809,38 +850,29 @@ const logoUrl =
         backgroundColor: theme.background,
       }}
     >
-
       {/* Back Button */}
-    <View
-  className="px-5 pb-3"
-  style={{ paddingTop: insets.top + 8 }}
->
-      <TouchableOpacity
-        onPress={() => router.back()}
-        activeOpacity={0.7}
-        className="h-10 w-10 items-center justify-center rounded-full border"
-        style={{
-          backgroundColor: theme.secondary,
-          borderColor: theme.border,
-        }}
-      >
-        <ArrowLeft size={20} color={theme.text} />
-      </TouchableOpacity>
-    </View>
-    
-      <View className="flex-1 items-center justify-center px-6">
+      <View className="px-5 pb-3" style={{ paddingTop: insets.top + 8 }}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          activeOpacity={0.7}
+          className="h-10 w-10 items-center justify-center rounded-full border"
+          style={{
+            backgroundColor: theme.secondary,
+            borderColor: theme.border,
+          }}
+        >
+          <ArrowLeft size={20} color={theme.text} />
+        </TouchableOpacity>
+      </View>
 
+      <View className="flex-1 items-center justify-center px-6">
         <View
           className="mb-6 h-20 w-20 items-center justify-center rounded-full"
           style={{
             backgroundColor: theme.secondary,
           }}
         >
-          <CheckCircle
-            size={52}
-            color={theme.accent}
-            strokeWidth={2}
-          />
+          <CheckCircle size={52} color={theme.accent} strokeWidth={2} />
         </View>
 
         <Text
@@ -859,8 +891,8 @@ const logoUrl =
           }}
         >
           {isHistoricalOrder
-  ? "View or print the invoice for your previous order."
-  : "Your order has been successfully booked."}
+            ? "View or print the invoice for your previous order."
+            : "Your order has been successfully booked."}
         </Text>
 
         <Text
@@ -880,11 +912,7 @@ const logoUrl =
           onPress={handleDownloadInvoice}
           disabled={downloading}
         >
-          <Download
-            size={20}
-            color={theme.background}
-            strokeWidth={2}
-          />
+          <Download size={20} color={theme.background} strokeWidth={2} />
 
           <Text
             className="ml-2 text-base font-semibold"
@@ -892,9 +920,7 @@ const logoUrl =
               color: theme.background,
             }}
           >
-            {downloading
-              ? "Preparing Invoice..."
-              : "Download Invoice"}
+            {downloading ? "Preparing Invoice..." : "Download Invoice"}
           </Text>
         </TouchableOpacity>
 
@@ -914,7 +940,6 @@ const logoUrl =
             Continue Shopping
           </Text>
         </TouchableOpacity>
-
       </View>
     </SafeAreaView>
   );
