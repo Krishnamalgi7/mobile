@@ -32,11 +32,11 @@ export default function HomeScreen() {
       >
         
         {/* Promotional Banner */}
-        <View className="mx-5 mt-5 overflow-hidden rounded-3xl">
+        <View className="mx-6 mt-5 overflow-hidden rounded-3xl">
           
           <Image
             source={require("@/assets/images/home-banner.png")}
-            className="h-[220px] w-full"
+            className="h-[200px] w-full"
             resizeMode="cover"
           />
         </View>

@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { ArrowLeft, CheckCircle, Download } from "lucide-react-native";
 import * as Print from "expo-print";
-
+import { Asset } from "expo-asset";
 import { useTheme } from "../hooks/use-theme";
 import { API_URL } from "../constants/config";
 
@@ -85,6 +85,7 @@ const isHistoricalOrder = params.source === "history";
 
   const handleDownloadInvoice = async () => {
     if (!invoice) {
+      
       console.error("Invoice data is missing");
       return;
     }
@@ -92,11 +93,20 @@ const isHistoricalOrder = params.source === "history";
     try {
       setDownloading(true);
 
-      const logoUrl = invoice.storeLogo
-        ? invoice.storeLogo.startsWith("http")
-          ? invoice.storeLogo
-          : `${API_URL}${invoice.storeLogo}`
-        : "";
+      const remoteLogoUrl = invoice.storeLogo
+  ? invoice.storeLogo.startsWith("http")
+    ? invoice.storeLogo
+    : `${API_URL}${invoice.storeLogo}`
+  : "";
+
+const fallbackAsset = Asset.fromModule(
+  require("@/assets/images/store-logo.png")
+);
+
+await fallbackAsset.downloadAsync();
+
+const logoUrl =
+  remoteLogoUrl || fallbackAsset.localUri || fallbackAsset.uri;
 
       const invoiceDate = new Date(
         invoice.invoiceDate
@@ -755,6 +765,7 @@ const isHistoricalOrder = params.source === "history";
   };
 
   if (!invoice) {
+    
     return (
       <SafeAreaView
         className="flex-1 items-center justify-center px-6"
