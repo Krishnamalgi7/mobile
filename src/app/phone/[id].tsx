@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -6,9 +6,12 @@ import {
   Text,
   TouchableOpacity,
   View,
+  PanResponder,
 } from "react-native";
 import {
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
   Minus,
   Package,
   Plus,
@@ -66,6 +69,14 @@ export default function PhoneDetailsScreen() {
   const [updatingCart, setUpdatingCart] = useState(false);
 
   const [imageFailed, setImageFailed] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | undefined>(
+    undefined,
+  );
+  const [failedThumbnailImages, setFailedThumbnailImages] = useState<string[]>(
+    [],
+  );
+
+  const currentImageIndexRef = useRef(0);
 
   const checkCartQuantity = async (phoneId: string) => {
     if (!isLoggedIn) {
@@ -150,6 +161,92 @@ export default function PhoneDetailsScreen() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!phone) return;
+
+    const productImages = Array.from(
+      new Set(
+        [phone.image, ...(phone.images ?? [])].filter(
+          (image): image is string =>
+            typeof image === "string" && image.trim().length > 0,
+        ),
+      ),
+    );
+
+    const index = productImages.indexOf(selectedImage ?? "");
+    const nextIndex = index >= 0 ? index : 0;
+
+    currentImageIndexRef.current = nextIndex;
+  }, [selectedImage, phone]);
+
+  const handleImageSwipe = (direction: "next" | "previous") => {
+    if (!phone) return;
+
+    const productImages = Array.from(
+      new Set(
+        [phone.image, ...(phone.images ?? [])].filter(
+          (image): image is string =>
+            typeof image === "string" && image.trim().length > 0,
+        ),
+      ),
+    );
+
+    if (productImages.length <= 1) return;
+
+    const nextIndex =
+      direction === "next"
+        ? (currentImageIndexRef.current + 1) % productImages.length
+        : (currentImageIndexRef.current - 1 + productImages.length) %
+          productImages.length;
+
+    currentImageIndexRef.current = nextIndex;
+
+    setSelectedImage(productImages[nextIndex]);
+    setImageFailed(false);
+  };
+
+  const imagePanResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) =>
+        Math.abs(gestureState.dx) > 12 &&
+        Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2,
+
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dx < -40) {
+          handleImageSwipe("next");
+        } else if (gestureState.dx > 40) {
+          handleImageSwipe("previous");
+        }
+      },
+    }),
+  ).current;
+
+  useEffect(() => {
+    if (!phone) return;
+
+    const productImages = Array.from(
+      new Set(
+        [phone.image, ...(phone.images ?? [])].filter(
+          (image): image is string =>
+            typeof image === "string" && image.trim().length > 0,
+        ),
+      ),
+    );
+
+    if (productImages.length <= 1) return;
+
+    const interval = setInterval(() => {
+      const nextIndex =
+        (currentImageIndexRef.current + 1) % productImages.length;
+
+      currentImageIndexRef.current = nextIndex;
+      setSelectedImage(productImages[nextIndex]);
+      setImageFailed(false);
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [phone]);
+
+  useEffect(() => {
     const fetchPhone = async () => {
       if (!id) {
         setError("Phone not found");
@@ -164,6 +261,7 @@ export default function PhoneDetailsScreen() {
         const data = await getPhoneById(id);
 
         setPhone(data);
+        setSelectedImage(data.image);
         if (isLoggedIn) {
           await checkCartQuantity(data._id);
         }
@@ -223,6 +321,15 @@ export default function PhoneDetailsScreen() {
   const hasDiscount =
     phone.discountPercentage !== undefined && phone.discountPercentage > 0;
 
+  const productImages = Array.from(
+    new Set(
+      [phone.image, ...(phone.images ?? [])].filter(
+        (image): image is string =>
+          typeof image === "string" && image.trim().length > 0,
+      ),
+    ),
+  );
+
   const inStock = phone.quantity > 0;
 
   const brand = getReferenceValue(phone.brand);
@@ -259,27 +366,132 @@ export default function PhoneDetailsScreen() {
         contentContainerClassName="pb-8"
         showsVerticalScrollIndicator={false}
       >
-        
-{/* Product Image */}
-<View
-  className="mx-4 mt-5 h-80 items-center justify-center rounded-3xl border"
-  style={{
-    backgroundColor: theme.secondary,
-    borderColor: theme.border,
-  }}
->
-  <Image
-    source={
-      phone.image && !imageFailed
-        ? { uri: phone.image }
-        : require("@/assets/images/phone-placeholder.png")
-    }
-    className="h-full w-full"
-    resizeMode="contain"
-    onError={() => setImageFailed(true)}
-  />
-</View>
+        {/* Product Image */}
+        {/* Product Image Gallery */}
+        {(() => {
+          const productImages = Array.from(
+            new Set(
+              [phone.image, ...(phone.images ?? [])].filter(
+                (image): image is string =>
+                  typeof image === "string" && image.trim().length > 0,
+              ),
+            ),
+          );
 
+          const activeImage = productImages.includes(selectedImage ?? "")
+            ? selectedImage
+            : productImages[0];
+
+          return (
+            <View className="mx-4 mt-5">
+              {/* Main Product Image */}
+              <View
+                {...imagePanResponder.panHandlers}
+                className="h-80 items-center justify-center overflow-hidden rounded-3xl border"
+                style={{
+                  backgroundColor: theme.secondary,
+                  borderColor: theme.border,
+                }}
+              >
+                <Image
+                  key={activeImage}
+                  source={
+                    activeImage && !imageFailed
+                      ? { uri: activeImage }
+                      : require("@/assets/images/phone-placeholder.png")
+                  }
+                  className="h-full w-full"
+                  resizeMode="contain"
+                  onError={() => setImageFailed(true)}
+                />
+
+                {productImages.length > 1 && (
+                  <>
+                    <TouchableOpacity
+                      onPress={() => handleImageSwipe("previous")}
+                      activeOpacity={0.7}
+                      className="absolute left-3 top-1/2 h-10 w-10 items-center justify-center rounded-full"
+                      style={{ backgroundColor: theme.background }}
+                    >
+                      <ChevronLeft size={24} color={theme.text} />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={() => handleImageSwipe("next")}
+                      activeOpacity={0.7}
+                      className="absolute right-3 top-1/2 h-10 w-10 items-center justify-center rounded-full"
+                      style={{ backgroundColor: theme.background }}
+                    >
+                      <ChevronRight size={24} color={theme.text} />
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+
+              {/* Image Thumbnails */}
+              {productImages.length > 1 && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{
+                    gap: 12,
+                    paddingVertical: 14,
+                  }}
+                >
+                  {productImages.map((image, index) => {
+                    const isSelected = image === activeImage;
+
+                    return (
+                      <TouchableOpacity
+                        key={`${image}-${index}`}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          setImageFailed(false);
+                          setSelectedImage(image);
+                        }}
+                        className="h-20 w-20 items-center justify-center overflow-hidden rounded-2xl border-2"
+                        style={{
+                          backgroundColor: theme.secondary,
+                          borderColor: isSelected
+                            ? theme.background
+                            : theme.border,
+                        }}
+                      >
+                        <Image
+                          source={
+                            failedThumbnailImages.includes(image)
+                              ? require("@/assets/images/phone-placeholder.png")
+                              : { uri: image }
+                          }
+                          className="h-full w-full"
+                          resizeMode="contain"
+                          onError={() => {
+                            setFailedThumbnailImages((previous) =>
+                              previous.includes(image)
+                                ? previous
+                                : [...previous, image],
+                            );
+                          }}
+                        />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              )}
+
+              {/* Image Count */}
+              {productImages.length > 1 && (
+                <Text
+                  className="text-center text-xs"
+                  style={{ color: theme.secondaryText }}
+                >
+                  {productImages.indexOf(activeImage ?? "") + 1} of{" "}
+                  {productImages.length} images
+                </Text>
+              )}
+            </View>
+          );
+        })()}
 
         {/* Product Information */}
 

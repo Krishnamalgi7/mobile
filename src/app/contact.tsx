@@ -11,16 +11,35 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   ArrowLeft,
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Clock3,
   Mail,
   MessageCircle,
+  MessageSquareText,
   Phone,
+  RefreshCw,
   Send,
   X,
 } from "lucide-react-native";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import { useTheme } from "@/hooks/use-theme";
 import { API_URL } from "@/constants/config";
+import { getToken } from "@/services/authService";
+
+type ContactMessage = {
+  _id: string;
+  name: string;
+  phone: string;
+  message: string;
+  reply?: string;
+  status: string;
+  createdAt: string;
+  updatedAt?: string;
+};
 
 export default function ContactScreen() {
   const { theme } = useTheme();
@@ -38,6 +57,59 @@ export default function ContactScreen() {
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState("");
+  const [myMessages, setMyMessages] = useState<ContactMessage[]>([]);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+  const [isRefreshingMessages, setIsRefreshingMessages] = useState(false);
+  const [messagesError, setMessagesError] = useState("");
+
+  const [expandedMessages, setExpandedMessages] = useState<string[]>([]);
+
+  const fetchMyMessages = useCallback(async (refresh = false) => {
+    try {
+      if (refresh) {
+        setIsRefreshingMessages(true);
+      } else {
+        setIsLoadingMessages(true);
+      }
+
+      setMessagesError("");
+
+      const token = await getToken();
+
+      if (!token) {
+        setMyMessages([]);
+        setMessagesError("Please log in to view your conversations.");
+        return;
+      }
+
+      const response = await fetch(
+        `${API_URL}/api/contacts/mobile/my-messages`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Unable to load messages.");
+      }
+
+      setMyMessages(data);
+    } catch (error) {
+      console.error("Failed to load contact messages:", error);
+      setMessagesError("Couldn't load your conversations. Please try again.");
+    } finally {
+      setIsLoadingMessages(false);
+      setIsRefreshingMessages(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMyMessages();
+  }, [fetchMyMessages]);
 
   // Handle name input
   const handleNameChange = (value: string) => {
@@ -88,10 +160,18 @@ export default function ContactScreen() {
       setIsSubmitting(true);
       setStatus("Submitting...");
 
-      const response = await fetch(`${API_URL}/api/contacts`, {
+      const token = await getToken();
+
+      if (!token) {
+        setStatus("Please log in to submit a message.");
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/api/contacts/mobile`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           name: name.trim(),
@@ -113,6 +193,7 @@ export default function ContactScreen() {
       setMessage("");
       setIsOpen(false);
       setStatus("Message submitted successfully.");
+      fetchMyMessages(true);
     } catch (error) {
       console.error("Contact form error:", error);
 
@@ -298,6 +379,55 @@ export default function ContactScreen() {
             }}
           >
             Get in Touch
+          </Text>
+        </TouchableOpacity>
+
+        <Text
+        className="mt-5 text-sm text-left"
+        >
+          Your conversations
+        </Text>
+
+        {/* MY TICKETS */}
+        <TouchableOpacity
+          onPress={() => router.push("/getin-touch-history")}
+          activeOpacity={0.8}
+          className="mt-3 flex-row items-center rounded-2xl border p-4"
+          style={{
+            backgroundColor: theme.secondary,
+            borderColor: theme.border,
+          }}
+        >
+          <View
+            className="mr-3 h-11 w-11 items-center justify-center rounded-full"
+            style={{ backgroundColor: theme.background }}
+          >
+            <MessageSquareText size={21} color={theme.text} />
+          </View>
+
+          <View className="flex-1">
+            <Text
+              className="text-sm font-semibold"
+              style={{ color: theme.text }}
+            >
+              My Queries
+            </Text>
+            <Text
+              className="mt-1 text-xs"
+              style={{ color: theme.secondaryText }}
+            >
+              View your enquiries and support replies
+            </Text>
+          </View>
+
+          <Text
+            className="text-2xl"
+            style={{ color: theme.secondaryText }}
+          >
+            <ChevronRight
+  size={22}
+  color={theme.secondaryText}
+/>
           </Text>
         </TouchableOpacity>
       </ScrollView>

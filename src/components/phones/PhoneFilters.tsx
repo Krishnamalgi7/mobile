@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react-native";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Modal,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { API_URL } from "@/constants/config";
 import { useTheme } from "@/hooks/use-theme";
@@ -651,8 +658,71 @@ export default function PhoneFilters({
 
       {/* FILTERS */}
 
-      {showFilters ? (
-        <View className="mt-3 flex-row flex-wrap items-start justify-between">
+      {/* FILTER POPUP */}
+
+      <Modal
+        visible={showFilters}
+        transparent
+        animationType="slide"
+        statusBarTranslucent
+        onRequestClose={() => {
+          setShowFilters(false);
+          setOpenFilter(null);
+        }}
+      >
+        <View
+          className="flex-1 justify-end"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+        >
+          <View
+            className="rounded-t-3xl pt-5"
+            style={{
+              backgroundColor: theme.background,
+              maxHeight: "85%",
+              minHeight: "55%",
+            }}
+          >
+            {/* POPUP HEADER */}
+
+            <View className="mb-4 flex-row items-center justify-between px-5">
+              <View>
+                <Text
+                  className="text-xl font-bold"
+                  style={{ color: theme.text }}
+                >
+                  Filter Phones
+                </Text>
+
+                <Text
+                  className="mt-1 text-xs"
+                  style={{ color: theme.secondaryText }}
+                >
+                  Find the phone that suits you
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => {
+                  setShowFilters(false);
+                  setOpenFilter(null);
+                }}
+                className="h-10 w-10 items-center justify-center rounded-full"
+                style={{ backgroundColor: theme.secondary }}
+                activeOpacity={0.7}
+              >
+                <X size={21} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                paddingHorizontal: 20,
+                paddingBottom: 28,
+              }}
+            >
+              <View className="flex-row flex-wrap items-start justify-between">
           {renderFilterSection(
             "Brand",
             "brand",
@@ -944,8 +1014,12 @@ export default function PhoneFilters({
               </Text>
             </TouchableOpacity>
           ) : null}
+                  
+              </View>
+            </ScrollView>
+          </View>
         </View>
-      ) : null}
+      </Modal>
     </View>
   );
 }
