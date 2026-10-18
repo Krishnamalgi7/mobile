@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import {
   ArrowLeft,
+  BellRing,
   ChevronLeft,
   ChevronRight,
   Minus,
@@ -31,6 +32,7 @@ import type { Phone } from "@/services/phoneService";
 import { formatIndianCurrency } from "@/utils/formatters";
 import { useTheme } from "@/hooks/use-theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getToken } from "@/services/authService";
 
 type ReferenceValue =
   | string
@@ -65,6 +67,7 @@ export default function PhoneDetailsScreen() {
   const insets = useSafeAreaInsets();
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartMessage, setCartMessage] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
   const [cartQuantity, setCartQuantity] = useState<number | null>(null);
   const [updatingCart, setUpdatingCart] = useState(false);
 
@@ -122,6 +125,59 @@ export default function PhoneDetailsScreen() {
       );
     } finally {
       setAddingToCart(false);
+    }
+  };
+
+  const handleNotifyMe = async () => {
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
+
+    if (!phone || phone.quantity > 0) {
+      return;
+    }
+
+    try {
+      setSubscribing(true);
+      setCartMessage("");
+
+      const token = await getToken();
+
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL}/api/stock-notifications/subscribe`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ phoneId: phone._id }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to enable notification.");
+      }
+
+      setCartMessage(
+        data.message || "We'll notify you when this phone is available.",
+      );
+    } catch (error) {
+      setCartMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to enable notification.",
+      );
+    } finally {
+      setSubscribing(false);
     }
   };
 
@@ -654,33 +710,61 @@ export default function PhoneDetailsScreen() {
             </View>
           ) : null}
 
-          {/* Add to Cart */}
+          {/* Add to Cart / Notify Me */}
           {cartQuantity === null ? (
-            <TouchableOpacity
-              onPress={handleAddToCart}
-              disabled={addingToCart || !inStock}
-              className="mt-6 items-center rounded-xl py-4"
-              style={{
-                backgroundColor: theme.accent,
-                opacity: addingToCart || !inStock ? 0.5 : 1,
-              }}
-              activeOpacity={0.8}
-            >
-              {addingToCart ? (
-                <ActivityIndicator color={theme.background} />
-              ) : (
-                <View className="flex-row items-center">
-                  <ShoppingCart size={20} color={theme.background} />
+            inStock ? (
+              <TouchableOpacity
+                onPress={handleAddToCart}
+                disabled={addingToCart || !inStock}
+                className="mt-6 items-center rounded-xl py-4"
+                style={{
+                  backgroundColor: theme.accent,
+                  opacity: addingToCart || !inStock ? 0.5 : 1,
+                }}
+                activeOpacity={0.8}
+              >
+                {addingToCart ? (
+                  <ActivityIndicator color={theme.background} />
+                ) : (
+                  <View className="flex-row items-center">
+                    <ShoppingCart size={20} color={theme.background} />
 
-                  <Text
-                    className="ml-2 font-bold"
-                    style={{ color: theme.background }}
-                  >
-                    Add to Cart
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
+                    <Text
+                      className="ml-2 font-bold"
+                      style={{ color: theme.background }}
+                    >
+                      Add to Cart
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={handleNotifyMe}
+                disabled={subscribing}
+                className="mt-6 items-center rounded-xl py-4"
+                style={{
+                  backgroundColor: theme.accent,
+                  opacity: subscribing ? 0.6 : 1,
+                }}
+                activeOpacity={0.8}
+              >
+                {subscribing ? (
+                  <ActivityIndicator color={theme.background} />
+                ) : (
+                  <View className="flex-row items-center">
+                    <BellRing size={20} color={theme.background} />
+
+                    <Text
+                      className="ml-2 font-bold"
+                      style={{ color: theme.background }}
+                    >
+                      Notify Me
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )
           ) : null}
 
           {cartMessage ? (

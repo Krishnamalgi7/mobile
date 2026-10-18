@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -7,8 +7,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import {
+  Bell,
   ChevronRight,
   LogOut,
   MessageSquare,
@@ -42,10 +43,17 @@ export default function ProfileScreen() {
   const [error, setError] = useState("");
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [unreadStockCount, setUnreadStockCount] = useState(0);
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
+  fetchProfile();
+}, []);
+
+useFocusEffect(
+  useCallback(() => {
+    fetchUnreadStockCount();
+  }, []),
+);
 
   const fetchProfile = async () => {
     try {
@@ -83,6 +91,36 @@ export default function ProfileScreen() {
     }
   };
 
+  const fetchUnreadStockCount = async () => {
+    try {
+      const token = await getToken();
+
+      if (!token) {
+        setUnreadStockCount(0);
+        return;
+      }
+
+      const response = await fetch(
+        `${API_URL}/api/stock-notifications/unread-count`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch unread stock count");
+      }
+
+      const data = await response.json();
+
+      setUnreadStockCount(data.unreadCount ?? 0);
+    } catch (error) {
+      console.error("Failed to fetch unread stock count:", error);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
@@ -109,46 +147,39 @@ export default function ProfileScreen() {
     router.push("/contact");
   };
 
-if (loading) {
-  return <AppLoader />;
-}
+  if (loading) {
+    return <AppLoader />;
+  }
 
-  
-if (error && !profile) {
-  return (
-    <View
-      className="flex-1 items-center justify-center px-6"
-      style={{
-        backgroundColor: theme.background,
-        paddingTop: insets.top,
-      }}
-    >
-      <Text
-        className="text-center text-base"
-        style={{ color: theme.text }}
-      >
-        {error}
-      </Text>
-
-      <TouchableOpacity
-        onPress={async () => {
-          await logout();
-          router.replace("/login");
+  if (error && !profile) {
+    return (
+      <View
+        className="flex-1 items-center justify-center px-6"
+        style={{
+          backgroundColor: theme.background,
+          paddingTop: insets.top,
         }}
-        activeOpacity={0.8}
-        className="mt-5 items-center rounded-xl px-6 py-3"
-        style={{ backgroundColor: theme.accent }}
       >
-        <Text
-          className="font-semibold"
-          style={{ color: theme.background }}
-        >
-          Log out and sign in again
+        <Text className="text-center text-base" style={{ color: theme.text }}>
+          {error}
         </Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
+
+        <TouchableOpacity
+          onPress={async () => {
+            await logout();
+            router.replace("/login");
+          }}
+          activeOpacity={0.8}
+          className="mt-5 items-center rounded-xl px-6 py-3"
+          style={{ backgroundColor: theme.accent }}
+        >
+          <Text className="font-semibold" style={{ color: theme.background }}>
+            Log out and sign in again
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   if (!profile) {
     return null;
@@ -168,10 +199,49 @@ if (error && !profile) {
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
+
+        {/* Header */}
         <View className="flex-row items-center justify-between">
-          <Text className="text-xl font-bold" style={{ color: theme.text }}>
+          <Text
+            className="flex-1 text-xl font-bold"
+            style={{ color: theme.text }}
+          >
             Welcome, {username}
           </Text>
+
+          <TouchableOpacity
+            onPress={() => router.push("/stock-notifications")}
+            activeOpacity={0.75}
+            className="ml-3 h-11 w-11 items-center justify-center rounded-full border"
+            style={{
+              backgroundColor: theme.secondary,
+              borderColor: theme.border,
+            }}
+          >
+            <View className="relative">
+              <Bell size={22} color={theme.text} />
+
+              {unreadStockCount > 0 && (
+                <View
+                  className="absolute items-center justify-center rounded-full px-1"
+                  style={{
+                    top: -7,
+                    right: -9,
+                    minWidth: 18,
+                    height: 18,
+                    backgroundColor: "#DC2626",
+                  }}
+                >
+                  <Text
+                    className="text-[10px] font-bold"
+                    style={{ color: "#FFFFFF" }}
+                  >
+                    {unreadStockCount > 99 ? "99+" : unreadStockCount}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* Profile summary */}
@@ -224,7 +294,7 @@ if (error && !profile) {
 
           {/* My Orders */}
           <TouchableOpacity
-          onPress={() => router.push("/my-orders")}
+            onPress={() => router.push("/my-orders")}
             activeOpacity={0.75}
             className="flex-row items-center rounded-xl border px-4 py-4"
             style={{

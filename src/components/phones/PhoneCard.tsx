@@ -11,12 +11,7 @@ type PhoneCardProps = {
   phone: Phone;
 };
 
-
-function PhoneCardImage({
-  image,
-}: {
-  image?: string | null;
-}) {
+function PhoneCardImage({ image }: { image?: string | null }) {
   const [imageFailed, setImageFailed] = useState(false);
 
   useEffect(() => {
@@ -37,9 +32,8 @@ function PhoneCardImage({
   );
 }
 
-
 export default function PhoneCard({ phone }: PhoneCardProps) {
-    const router = useRouter();
+  const router = useRouter();
   const { theme } = useTheme();
 
   const finalPrice = phone.totalPrice ?? phone.price;
@@ -47,19 +41,17 @@ export default function PhoneCard({ phone }: PhoneCardProps) {
 
   return (
     <TouchableOpacity
-  className="mb-4 w-[48%] overflow-hidden rounded-2xl border"
-  onPress={() => router.push(`/phone/${phone._id}`)}
-  activeOpacity={0.85}
+      className="mb-4 w-[48%] overflow-hidden rounded-2xl border"
+      onPress={() => router.push(`/phone/${phone._id}`)}
+      activeOpacity={0.85}
       style={{
         backgroundColor: theme.background,
         borderColor: theme.border,
       }}
     >
-      
-<View className="h-40 w-full items-center justify-center">
-  <PhoneCardImage image={phone.image} />
-</View>
-
+      <View className="h-40 w-full items-center justify-center">
+        <PhoneCardImage image={phone.image} />
+      </View>
 
       <View className="px-3 pb-3">
         <Text
@@ -71,51 +63,43 @@ export default function PhoneCard({ phone }: PhoneCardProps) {
         </Text>
 
         <View className="mt-2 flex-row items-center">
-  <View
-    className="flex-row items-center rounded-md px-2 py-1"
-    style={{ backgroundColor: theme.accent }}
-  >
-    <Star
-      size={13}
-      color={theme.background}
-      fill={theme.background}
-    />
+          <View
+            className="flex-row items-center rounded-md px-2 py-1"
+            style={{ backgroundColor: theme.accent }}
+          >
+            <Star size={13} color={theme.background} fill={theme.background} />
 
-    <Text
-      className="ml-1 text-xs font-bold"
-      style={{ color: theme.background }}
-    >
-      {phone.averageRating?.toFixed(1) ?? "0.0"}
-    </Text>
-  </View>
+            <Text
+              className="ml-1 text-xs font-bold"
+              style={{ color: theme.background }}
+            >
+              {phone.averageRating?.toFixed(1) ?? "0.0"}
+            </Text>
+          </View>
 
-  <Text
-    className="ml-2 text-xs"
-    style={{ color: theme.secondaryText }}
-  >
-    {phone.ratingCount ?? 0} ratings
-  </Text>
-</View>
+          <Text className="ml-2 text-xs" style={{ color: theme.secondaryText }}>
+            {phone.ratingCount ?? 0} ratings
+          </Text>
+        </View>
 
-<View className="mt-2 flex-row items-center">
-  <Package
-    size={14}
-    color={theme.secondaryText}
-  />
+        <View className="mt-2 flex-row items-center">
+          <Package
+            size={14}
+            color={phone.quantity > 0 ? theme.secondaryText : "#DC2626"}
+          />
 
-  <Text
-    className="ml-1 text-xs"
-    style={{ color: theme.secondaryText }}
-  >
-    Quantity · {phone.quantity}
-  </Text>
-</View>
+          <Text
+            className="ml-1 text-xs"
+            style={{
+              color: phone.quantity > 0 ? theme.secondaryText : "#DC2626",
+            }}
+          >
+            {phone.quantity > 0 ? "In Stock" : "Out of Stock"}
+          </Text>
+        </View>
 
         <View className="mt-3 flex-row items-center">
-          <Text
-            className="text-base font-bold"
-            style={{ color: theme.text }}
-          >
+          <Text className="text-base font-bold" style={{ color: theme.text }}>
             {formatIndianCurrency(finalPrice)}
           </Text>
 
