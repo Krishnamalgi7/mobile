@@ -108,6 +108,33 @@ export default function ContactScreen() {
   }, []);
 
   useEffect(() => {
+  const fetchCustomerProfile = async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const response = await fetch(
+        `${API_URL}/api/customer-auth/profile`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.customer) {
+        setName(data.customer.name || "");
+        setPhone(data.customer.phone || "");
+      }
+    } catch (error) {
+      console.error("Failed to load customer profile:", error);
+    }
+  };
+
+  fetchCustomerProfile();
+}, []);
+
+  useEffect(() => {
     fetchMyMessages();
   }, [fetchMyMessages]);
 
@@ -188,9 +215,9 @@ export default function ContactScreen() {
 
       // Same successful flow as desktop:
       // clear form and close popup
-      setName("");
-      setPhone("");
+      
       setMessage("");
+      
       setIsOpen(false);
       setStatus("Message submitted successfully.");
       fetchMyMessages(true);
@@ -506,12 +533,14 @@ export default function ContactScreen() {
                 style={{
                   color: theme.text,
                 }}
+                
               >
                 Name
               </Text>
 
               <TextInput
                 value={name}
+                editable={false}
                 onChangeText={handleNameChange}
                 placeholder="Enter your name"
                 placeholderTextColor={theme.secondaryText}
@@ -566,6 +595,7 @@ export default function ContactScreen() {
                 <TextInput
                   value={phone}
                   onChangeText={handlePhoneChange}
+                  editable={false}
                   placeholder="Enter 10 digit number"
                   placeholderTextColor={theme.secondaryText}
                   keyboardType="number-pad"

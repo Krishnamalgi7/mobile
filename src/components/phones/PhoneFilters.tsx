@@ -7,6 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Pressable,
 } from "react-native";
 
 import { API_URL } from "@/constants/config";
@@ -656,8 +657,6 @@ export default function PhoneFilters({
         </TouchableOpacity>
       </View>
 
-      {/* FILTERS */}
-
       {/* FILTER POPUP */}
 
       <Modal
@@ -670,9 +669,10 @@ export default function PhoneFilters({
           setOpenFilter(null);
         }}
       >
-        <View
+        <Pressable
           className="flex-1 justify-end"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+          onPress={() => setOpenFilter(null)}
         >
           <View
             className="rounded-t-3xl pt-5"
@@ -723,302 +723,309 @@ export default function PhoneFilters({
               }}
             >
               <View className="flex-row flex-wrap items-start justify-between">
-          {renderFilterSection(
-            "Brand",
-            "brand",
-            filters.brands,
-            selectedBrand,
-            handleBrandSelect,
-          )}
+                {renderFilterSection(
+                  "Brand",
+                  "brand",
+                  filters.brands,
+                  selectedBrand,
+                  handleBrandSelect,
+                )}
 
-          {renderFilterSection(
-            "Variant",
-            "variant",
-            filters.variants,
-            selectedVariant,
-            handleVariantSelect,
-          )}
+                {renderFilterSection(
+                  "Variant",
+                  "variant",
+                  filters.variants,
+                  selectedVariant,
+                  handleVariantSelect,
+                )}
 
-          {renderFilterSection(
-            "RAM",
-            "ram",
-            filters.rams,
-            selectedRam,
-            handleRamSelect,
-          )}
+                {renderFilterSection(
+                  "RAM",
+                  "ram",
+                  filters.rams,
+                  selectedRam,
+                  handleRamSelect,
+                )}
 
-          {renderFilterSection(
-            "ROM",
-            "rom",
-            filters.roms,
-            selectedRom,
-            handleRomSelect,
-          )}
+                {renderFilterSection(
+                  "ROM",
+                  "rom",
+                  filters.roms,
+                  selectedRom,
+                  handleRomSelect,
+                )}
 
-          {renderFilterSection(
-            "Rating",
-            "rating",
-            ratingOptions,
-            selectedRating,
-            handleRatingSelect,
-          )}
+                {renderFilterSection(
+                  "Rating",
+                  "rating",
+                  ratingOptions,
+                  selectedRating,
+                  handleRatingSelect,
+                )}
 
-          {/* PRICE */}
+                {/* PRICE */}
 
-          <View
-            className="mb-3 w-[48%] rounded-xl border"
-            style={{
-              position: "relative",
-              backgroundColor: theme.background,
-              borderColor: theme.border,
-              zIndex: openFilter === "price" ? 100 : 1,
-            }}
-          >
-            <TouchableOpacity
-              onPress={() => {
-                setOpenFilter(openFilter === "price" ? null : "price");
-              }}
-              className="flex-row items-center justify-between px-4 py-3.5"
-              activeOpacity={0.7}
-            >
-              <View className="flex-row items-center">
-                <Text
-                  className="text-sm font-semibold"
+                <View
+                  className="mb-3 w-[48%] rounded-xl border"
                   style={{
-                    color: theme.text,
+                    position: "relative",
+                    backgroundColor: theme.background,
+                    borderColor: theme.border,
+                    zIndex: openFilter === "price" ? 100 : 1,
                   }}
                 >
-                  Price
-                </Text>
-
-                {priceChanged || priceSort ? (
-                  <View
-                    className="ml-2 rounded-full px-2 py-0.5"
-                    style={{
-                      backgroundColor: theme.accent,
+                  <TouchableOpacity
+                    onPress={() => {
+                      setOpenFilter(openFilter === "price" ? null : "price");
                     }}
+                    className="flex-row items-center justify-between px-4 py-3.5"
+                    activeOpacity={0.7}
                   >
-                    <Text
-                      className="text-[10px] font-bold"
+                    <View className="flex-row items-center">
+                      <Text
+                        className="text-sm font-semibold"
+                        style={{
+                          color: theme.text,
+                        }}
+                      >
+                        Price
+                      </Text>
+
+                      {priceChanged || priceSort ? (
+                        <View
+                          className="ml-2 rounded-full px-2 py-0.5"
+                          style={{
+                            backgroundColor: theme.accent,
+                          }}
+                        >
+                          <Text
+                            className="text-[10px] font-bold"
+                            style={{
+                              color: theme.background,
+                            }}
+                          >
+                            1
+                          </Text>
+                        </View>
+                      ) : null}
+                    </View>
+
+                    <ChevronDown
+                      size={18}
+                      color={theme.secondaryText}
                       style={{
-                        color: theme.background,
+                        transform: [
+                          {
+                            rotate: openFilter === "price" ? "180deg" : "0deg",
+                          },
+                        ],
+                      }}
+                    />
+                  </TouchableOpacity>
+
+                  {openFilter === "price" ? (
+                    <View
+                      className="absolute left-0 right-0 rounded-xl border px-2 py-4"
+                      style={{
+                        top: "30%",
+                        marginTop: 4,
+                        backgroundColor: theme.background,
+                        borderColor: theme.border,
+                        zIndex: 100,
+                        elevation: 10,
+                        shadowColor: "#000",
+                        shadowOffset: {
+                          width: 0,
+                          height: 4,
+                        },
+                        shadowOpacity: 0.15,
+                        shadowRadius: 8,
                       }}
                     >
-                      1
+                      {/* SORT */}
+
+                      <Text
+                        className="mb-2 text-xs font-semibold"
+                        style={{
+                          color: theme.secondaryText,
+                        }}
+                      >
+                        Sort by price
+                      </Text>
+
+                      <View className="flex-row">
+                        <TouchableOpacity
+                          onPress={() =>
+                            setPriceSort(
+                              priceSort === "low-high" ? "" : "low-high",
+                            )
+                          }
+                          className="mr-2 rounded-lg border px-3 py-2"
+                          style={{
+                            backgroundColor:
+                              priceSort === "low-high"
+                                ? theme.accent
+                                : theme.secondary,
+                            borderColor:
+                              priceSort === "low-high"
+                                ? theme.accent
+                                : theme.border,
+                          }}
+                          activeOpacity={0.7}
+                        >
+                          <Text
+                            className="text-xs font-semibold"
+                            style={{
+                              color:
+                                priceSort === "low-high"
+                                  ? theme.background
+                                  : theme.text,
+                            }}
+                          >
+                            Low to High
+                          </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          onPress={() =>
+                            setPriceSort(
+                              priceSort === "high-low" ? "" : "high-low",
+                            )
+                          }
+                          className="rounded-lg border px-3 py-2"
+                          style={{
+                            backgroundColor:
+                              priceSort === "high-low"
+                                ? theme.accent
+                                : theme.secondary,
+                            borderColor:
+                              priceSort === "high-low"
+                                ? theme.accent
+                                : theme.border,
+                          }}
+                          activeOpacity={0.7}
+                        >
+                          <Text
+                            className="text-xs font-semibold"
+                            style={{
+                              color:
+                                priceSort === "high-low"
+                                  ? theme.background
+                                  : theme.text,
+                            }}
+                          >
+                            High to Low
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* PRICE RANGE */}
+
+                      <Text
+                        className="mb-2 mt-4 text-xs font-semibold"
+                        style={{
+                          color: theme.secondaryText,
+                        }}
+                      >
+                        Price range
+                      </Text>
+
+                      <View className="flex-row items-center">
+                        <TextInput
+                          value={String(priceRange[0])}
+                          keyboardType="numeric"
+                          onChangeText={(value) => {
+                            const number = Number(value.replace(/\D/g, ""));
+
+                            setPriceRange([
+                              Math.min(number, priceRange[1]),
+                              priceRange[1],
+                            ]);
+
+                            setPriceChanged(true);
+                          }}
+                          className="flex-1 rounded-lg border px-3 py-2.5 text-sm"
+                          style={{
+                            color: theme.text,
+                            backgroundColor: theme.secondary,
+                            borderColor: theme.border,
+                          }}
+                          placeholder="Min"
+                          placeholderTextColor={theme.secondaryText}
+                        />
+
+                        <Text
+                          className="mx-2 text-xs"
+                          style={{
+                            color: theme.secondaryText,
+                          }}
+                        >
+                          to
+                        </Text>
+
+                        <TextInput
+                          value={String(priceRange[1])}
+                          keyboardType="numeric"
+                          onChangeText={(value) => {
+                            const number = Number(value.replace(/\D/g, ""));
+
+                            setPriceRange([
+                              priceRange[0],
+                              Math.max(number, priceRange[0]),
+                            ]);
+
+                            setPriceChanged(true);
+                          }}
+                          className="flex-1 rounded-lg border px-3 py-2.5 text-sm"
+                          style={{
+                            color: theme.text,
+                            backgroundColor: theme.secondary,
+                            borderColor: theme.border,
+                          }}
+                          placeholder="Max"
+                          placeholderTextColor={theme.secondaryText}
+                        />
+                      </View>
+
+                      <Text
+                        className="mt-2 text-[11px]"
+                        style={{
+                          color: theme.secondaryText,
+                        }}
+                      >
+                        Available: ₹{filters.price.min.toLocaleString("en-IN")}{" "}
+                        - ₹{filters.price.max.toLocaleString("en-IN")}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                {/* CLEAR */}
+
+                {activeFilterCount > 0 ? (
+                  <TouchableOpacity
+                    onPress={handleClear}
+                    className="items-center rounded-xl border py-3"
+                    style={{
+                      backgroundColor: theme.secondary,
+                      borderColor: theme.border,
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      className="text-sm font-semibold"
+                      style={{
+                        color: theme.accent,
+                      }}
+                    >
+                      Clear Filters
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 ) : null}
-              </View>
-
-              <ChevronDown
-                size={18}
-                color={theme.secondaryText}
-                style={{
-                  transform: [
-                    {
-                      rotate: openFilter === "price" ? "180deg" : "0deg",
-                    },
-                  ],
-                }}
-              />
-            </TouchableOpacity>
-
-            {openFilter === "price" ? (
-              <View
-                className="absolute left-0 right-0 rounded-xl border px-2 py-4"
-                style={{
-                  top: "30%",
-                  marginTop: 4,
-                  backgroundColor: theme.background,
-                  borderColor: theme.border,
-                  zIndex: 100,
-                  elevation: 10,
-                  shadowColor: "#000",
-                  shadowOffset: {
-                    width: 0,
-                    height: 4,
-                  },
-                  shadowOpacity: 0.15,
-                  shadowRadius: 8,
-                }}
-              >
-                {/* SORT */}
-
-                <Text
-                  className="mb-2 text-xs font-semibold"
-                  style={{
-                    color: theme.secondaryText,
-                  }}
-                >
-                  Sort by price
-                </Text>
-
-                <View className="flex-row">
-                  <TouchableOpacity
-                    onPress={() =>
-                      setPriceSort(priceSort === "low-high" ? "" : "low-high")
-                    }
-                    className="mr-2 rounded-lg border px-3 py-2"
-                    style={{
-                      backgroundColor:
-                        priceSort === "low-high"
-                          ? theme.accent
-                          : theme.secondary,
-                      borderColor:
-                        priceSort === "low-high" ? theme.accent : theme.border,
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      className="text-xs font-semibold"
-                      style={{
-                        color:
-                          priceSort === "low-high"
-                            ? theme.background
-                            : theme.text,
-                      }}
-                    >
-                      Low to High
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={() =>
-                      setPriceSort(priceSort === "high-low" ? "" : "high-low")
-                    }
-                    className="rounded-lg border px-3 py-2"
-                    style={{
-                      backgroundColor:
-                        priceSort === "high-low"
-                          ? theme.accent
-                          : theme.secondary,
-                      borderColor:
-                        priceSort === "high-low" ? theme.accent : theme.border,
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      className="text-xs font-semibold"
-                      style={{
-                        color:
-                          priceSort === "high-low"
-                            ? theme.background
-                            : theme.text,
-                      }}
-                    >
-                      High to Low
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* PRICE RANGE */}
-
-                <Text
-                  className="mb-2 mt-4 text-xs font-semibold"
-                  style={{
-                    color: theme.secondaryText,
-                  }}
-                >
-                  Price range
-                </Text>
-
-                <View className="flex-row items-center">
-                  <TextInput
-                    value={String(priceRange[0])}
-                    keyboardType="numeric"
-                    onChangeText={(value) => {
-                      const number = Number(value.replace(/\D/g, ""));
-
-                      setPriceRange([
-                        Math.min(number, priceRange[1]),
-                        priceRange[1],
-                      ]);
-
-                      setPriceChanged(true);
-                    }}
-                    className="flex-1 rounded-lg border px-3 py-2.5 text-sm"
-                    style={{
-                      color: theme.text,
-                      backgroundColor: theme.secondary,
-                      borderColor: theme.border,
-                    }}
-                    placeholder="Min"
-                    placeholderTextColor={theme.secondaryText}
-                  />
-
-                  <Text
-                    className="mx-2 text-xs"
-                    style={{
-                      color: theme.secondaryText,
-                    }}
-                  >
-                    to
-                  </Text>
-
-                  <TextInput
-                    value={String(priceRange[1])}
-                    keyboardType="numeric"
-                    onChangeText={(value) => {
-                      const number = Number(value.replace(/\D/g, ""));
-
-                      setPriceRange([
-                        priceRange[0],
-                        Math.max(number, priceRange[0]),
-                      ]);
-
-                      setPriceChanged(true);
-                    }}
-                    className="flex-1 rounded-lg border px-3 py-2.5 text-sm"
-                    style={{
-                      color: theme.text,
-                      backgroundColor: theme.secondary,
-                      borderColor: theme.border,
-                    }}
-                    placeholder="Max"
-                    placeholderTextColor={theme.secondaryText}
-                  />
-                </View>
-
-                <Text
-                  className="mt-2 text-[11px]"
-                  style={{
-                    color: theme.secondaryText,
-                  }}
-                >
-                  Available: ₹{filters.price.min.toLocaleString("en-IN")} - ₹
-                  {filters.price.max.toLocaleString("en-IN")}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-
-          {/* CLEAR */}
-
-          {activeFilterCount > 0 ? (
-            <TouchableOpacity
-              onPress={handleClear}
-              className="items-center rounded-xl border py-3"
-              style={{
-                backgroundColor: theme.secondary,
-                borderColor: theme.border,
-              }}
-              activeOpacity={0.7}
-            >
-              <Text
-                className="text-sm font-semibold"
-                style={{
-                  color: theme.accent,
-                }}
-              >
-                Clear Filters
-              </Text>
-            </TouchableOpacity>
-          ) : null}
-                  
               </View>
             </ScrollView>
           </View>
-        </View>
+        </Pressable>
       </Modal>
     </View>
   );
