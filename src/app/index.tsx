@@ -37,7 +37,7 @@ export default function HomeScreen() {
           <Image
             source={require("@/assets/images/home-banner.png")}
             className="h-[200px] w-full"
-            resizeMode="cover"
+            resizeMode="contain"
           />
         </View>
 
