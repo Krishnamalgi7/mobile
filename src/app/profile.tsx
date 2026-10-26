@@ -22,6 +22,7 @@ import AppLoader from "@/utils/AppLoader";
 import { useTheme } from "@/hooks/use-theme";
 import { useAuth } from "@/context/AuthContext";
 import { getToken } from "@/services/authService";
+import { socket } from "@/services/socketService";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -44,16 +45,18 @@ export default function ProfileScreen() {
   const [showLogoutPopup, setShowLogoutPopup] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [unreadStockCount, setUnreadStockCount] = useState(0);
+  const [unreadQueryCount, setUnreadQueryCount] = useState(0);
 
   useEffect(() => {
-  fetchProfile();
-}, []);
+    fetchProfile();
+  }, []);
 
-useFocusEffect(
-  useCallback(() => {
-    fetchUnreadStockCount();
-  }, []),
-);
+  useFocusEffect(
+    useCallback(() => {
+      fetchUnreadStockCount();
+      fetchUnreadQueryCount();
+    }, []),
+  );
 
   const fetchProfile = async () => {
     try {
@@ -120,6 +123,49 @@ useFocusEffect(
       console.error("Failed to fetch unread stock count:", error);
     }
   };
+
+  const fetchUnreadQueryCount = useCallback(async () => {
+    try {
+      const token = await getToken();
+
+      if (!token) {
+        setUnreadQueryCount(0);
+        return;
+      }
+
+      const response = await fetch(
+        `${API_URL}/api/contacts/mobile/notifications/unread-count`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch unread query count");
+      }
+
+      const data = await response.json();
+      setUnreadQueryCount(data.count ?? 0);
+    } catch (error) {
+      console.error("Failed to fetch unread query count:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+  const handleConversationUpdate = () => {
+    fetchUnreadQueryCount();
+  };
+
+  socket.connect();
+  socket.on("contact-conversation-updated", handleConversationUpdate);
+
+  return () => {
+    socket.off("contact-conversation-updated", handleConversationUpdate);
+    socket.disconnect();
+  };
+}, [fetchUnreadQueryCount]);
 
   const handleLogout = async () => {
     try {
@@ -199,8 +245,6 @@ useFocusEffect(
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
-
-        {/* Header */}
         <View className="flex-row items-center justify-between">
           <Text
             className="flex-1 text-xl font-bold"
@@ -221,7 +265,7 @@ useFocusEffect(
             <View className="relative">
               <Bell size={22} color={theme.text} />
 
-              {unreadStockCount > 0 && (
+              {unreadStockCount + unreadQueryCount > 0 && (
                 <View
                   className="absolute items-center justify-center rounded-full px-1"
                   style={{
@@ -236,7 +280,9 @@ useFocusEffect(
                     className="text-[10px] font-bold"
                     style={{ color: "#FFFFFF" }}
                   >
-                    {unreadStockCount > 99 ? "99+" : unreadStockCount}
+                    {unreadStockCount + unreadQueryCount > 99
+                      ? "99+"
+                      : unreadStockCount + unreadQueryCount}
                   </Text>
                 </View>
               )}

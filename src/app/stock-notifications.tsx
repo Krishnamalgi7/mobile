@@ -30,12 +30,25 @@ type StockNotification = {
   } | null;
 };
 
+type QueryNotification = {
+  _id: string;
+  name: string;
+  message: string;
+  reply?: string | null;
+  lastAdminReplyAt?: string | null;
+  lastAdminReplyReadAt?: string | null;
+  createdAt: string;
+};
+
 export default function StockNotificationsScreen() {
   const { theme } = useTheme();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
   const [notifications, setNotifications] = useState<StockNotification[]>([]);
+  const [queryNotifications, setQueryNotifications] = useState<
+    QueryNotification[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -79,6 +92,25 @@ export default function StockNotificationsScreen() {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      const queryResponse = await fetch(
+        `${API_URL}/api/contacts/mobile/my-messages`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!queryResponse.ok) {
+        throw new Error("Failed to load query notifications.");
+      }
+
+      const queryData = await queryResponse.json();
+
+      setQueryNotifications(
+        queryData.filter((item: QueryNotification) => item.lastAdminReplyAt),
+      );
     } catch (err) {
       console.error("Failed to fetch stock notifications:", err);
       setError(
@@ -162,7 +194,7 @@ export default function StockNotificationsScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-        ) : notifications.length === 0 ? (
+        ) : notifications.length === 0 && queryNotifications.length === 0 ? (
           <View className="items-center py-12">
             <Bell size={38} color={theme.secondaryText} />
             <Text
@@ -234,6 +266,90 @@ export default function StockNotificationsScreen() {
                   </View>
                 </View>
               </View>
+            ))}
+
+            {queryNotifications.map((item) => (
+              <TouchableOpacity
+                key={`query-${item._id}`}
+                activeOpacity={0.75}
+                onPress={async () => {
+                  try {
+                    const token = await getToken();
+
+                    if (item.lastAdminReplyReadAt) {
+                      router.push("/getin-touch-history");
+                      return;
+                    }
+
+                    if (!token) {
+                      router.push("/getin-touch-history");
+                      return;
+                    }
+
+                    const response = await fetch(
+                      `${API_URL}/api/contacts/mobile/notifications/${item._id}/read`,
+                      {
+                        method: "PATCH",
+                        headers: {
+                          Authorization: `Bearer ${token}`,
+                        },
+                      },
+                    );
+
+                    if (!response.ok) {
+                      const errorDetails = await response.text();
+
+                      console.error(
+                        "Failed to mark query notification as read:",
+                        response.status,
+                        errorDetails,
+                      );
+                    }
+                  } catch (error) {
+                    console.error(
+                      "Query notification read request error:",
+                      error instanceof Error ? error.message : error,
+                    );
+                  } finally {
+                    router.push("/getin-touch-history");
+                  }
+                }}
+                className="rounded-2xl border p-4"
+                style={{
+                  backgroundColor: theme.secondary,
+                  borderColor: theme.border,
+                }}
+              >
+                <View className="flex-row items-start">
+                  <Bell size={20} color="#16A34A" />
+                  <View className="ml-3 flex-1">
+                    <Text
+                      className="text-sm font-semibold"
+                      style={{ color: theme.text }}
+                    >
+                      Reply to your query
+                    </Text>
+
+                    <Text
+                      className="mt-1 text-sm"
+                      style={{ color: theme.secondaryText }}
+                    >
+                      {item.reply || item.message}
+                    </Text>
+
+                    {item.lastAdminReplyAt && (
+                      <Text
+                        className="mt-2 text-xs"
+                        style={{ color: theme.secondaryText }}
+                      >
+                        {new Date(item.lastAdminReplyAt).toLocaleDateString(
+                          "en-IN",
+                        )}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
