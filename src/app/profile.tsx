@@ -153,19 +153,43 @@ export default function ProfileScreen() {
     }
   }, []);
 
-  useEffect(() => {
+  
+useEffect(() => {
   const handleConversationUpdate = () => {
     fetchUnreadQueryCount();
   };
 
+  const handleStockNotificationsProcessed = () => {
+    fetchUnreadStockCount();
+  };
+
   socket.connect();
-  socket.on("contact-conversation-updated", handleConversationUpdate);
+
+  socket.on(
+    "contact-conversation-updated",
+    handleConversationUpdate,
+  );
+
+  socket.on(
+    "stock-notifications-processed",
+    handleStockNotificationsProcessed,
+  );
 
   return () => {
-    socket.off("contact-conversation-updated", handleConversationUpdate);
+    socket.off(
+      "contact-conversation-updated",
+      handleConversationUpdate,
+    );
+
+    socket.off(
+      "stock-notifications-processed",
+      handleStockNotificationsProcessed,
+    );
+
     socket.disconnect();
   };
 }, [fetchUnreadQueryCount]);
+
 
   const handleLogout = async () => {
     try {
